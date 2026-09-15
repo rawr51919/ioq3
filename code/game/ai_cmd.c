@@ -200,6 +200,7 @@ float BotGetTime(bot_match_t *match) {
 	bot_match_t timematch;
 	char timestring[MAX_MESSAGE_SIZE];
 	float t;
+	qboolean forever = qfalse;
 
 	//if the matched string has a time
 	if (match->subtype & ST_TIME) {
@@ -208,7 +209,14 @@ float BotGetTime(bot_match_t *match) {
 		//match it to find out if the time is in seconds or minutes
 		if (trap_BotFindMatch(timestring, &timematch, MTCONTEXT_TIME)) {
 			if (timematch.type == MSG_FOREVER) {
-				t = 99999999.0f;
+				forever = qtrue;
+				#ifdef INFINITY
+					t = INFINITY; // INFINITY defined, use it
+				#elif defined(FLT_MAX)
+					t = FLT_MAX; // INFINITY not defined, use FLT_MAX instead
+				#else
+					t = 3.402823466e+38f; // IEEE-754 binary32 maximum literal fallback if neither INFINITY nor FLT_MAX are defined
+				#endif
 			}
 			else if (timematch.type == MSG_FORAWHILE) {
 				t = 10 * 60; // 10 minutes
@@ -223,7 +231,8 @@ float BotGetTime(bot_match_t *match) {
 				else t = 0;
 			}
 			//if there's a valid time
-			if (t > 0) return FloatTime() + t;
+			if (forever) return t; // forever set, return t
+			if (t > 0 && !forever) return FloatTime() + t; // if forever not set, return FloatTime() + t like before
 		}
 	}
 	return 0;
