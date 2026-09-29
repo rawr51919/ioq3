@@ -42,3 +42,4 @@ profile
 *.suo
 /.vs
 /cmake/tools/.vs
+/CMakeSettings.json
